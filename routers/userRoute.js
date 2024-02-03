@@ -6,5 +6,6 @@ route.get(`/`, userController.getUsers)
 route.get(`/:id`, userController.getUser)
 route.post(`/`, userController.upload.single('photo'), userController.createUser)
 route.put(`/:id`,userController.upload.single('photo'), userController.updateUser)
+route.delete(`/:id`, userController.deleteUser)
 
 module.exports = route

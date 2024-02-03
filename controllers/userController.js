@@ -1,6 +1,6 @@
 const { json } = require("sequelize");
 const { User } = require("../models");
-const path = require('path')
+const path = require("path");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
 const { v4: uuidv4 } = require("uuid");
@@ -8,9 +8,9 @@ const bcrypt = require("bcrypt");
 
 // Multer Storage
 const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, "./public/photo");
-//   },
+  //   destination: (req, file, cb) => {
+  //     cb(null, "./public/photo");
+  //   },
   filename: (req, file, cb) => {
     cb(null, `photo-${Date.now()}` + path.extname(file.originalname));
   },
@@ -113,8 +113,9 @@ exports.createUser = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
+    let image = "";
     const userId = req.params.id;
-    const { username, fullName, email, password, photo, role } = req.body;
+    const { username, fullName, email, role } = req.body;
     const user = await User.findOne({
       where: {
         id: userId,
@@ -122,31 +123,51 @@ exports.updateUser = async (req, res) => {
     });
 
     if (!user) {
-      res.status(404).json({
+      return res.status(404).json({
         message: "User not found",
       });
+    }
+    
+    if (req.file) {
       const image = await cloudinary.uploader.upload(req.file.path, {
         folder: "fix-oauth/photo",
         use_filename: true,
         public_id: uuidv4() + req.file.originalname + "-" + Date.now(),
       });
+    }
 
-      const hashPassoword = await bcrypt.hash(password, 10);
-
-      const updateUser = await User.update({
+    const [updatedRowsCount] = await User.update(
+      {
         username,
         fullName,
         email,
-        password: hashPassoword,
         photo: image.secure_url,
         role,
+      },
+      {
+        where: {
+          id: userId,
+        },
+        returning: true,
+      }
+    );
+
+    if (updatedRowsCount > 0) {
+      const updatedUser = await User.findOne({
+        where: {
+          id: userId,
+        },
       });
 
-      res.status(200).json({
+      return res.status(200).json({
         message: "Success",
-        data: updateUser,
+        data: updatedUser,
       });
-      console.log(updateUser);
+    } 
+    else {
+      return res.status(404).json({
+        message: "Not Data Updated",
+      });
     }
   } catch (error) {
     res.status(500).json({
@@ -179,6 +200,7 @@ exports.deleteUser = async (req, res) => {
 
     res.status(200).json({
       message: "Success",
+      userId: userId,
       data: deleteUser,
     });
     console.log(deleteUser);
