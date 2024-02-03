@@ -71,6 +71,7 @@ passport.use(
             fullName: profile.displayName,
             email: profile.emails[0].value,
             photo: profile.photos[0].value,
+            role: "student"
           });
 
           done(null, newUser);

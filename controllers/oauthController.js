@@ -19,7 +19,11 @@ exports.handleGoogleCallback = (req, res, next) => {
 
     // Setelah otentikasi sukses, buat token JWT dan kirimkan ke client
     const token = jwtUtils.generateJwt(user);
-    return res.redirect(`/${api}/oauth/protected?token=${token}`);
+    return res
+      .redirect(`/${api}/oauth/protected?token=${token}`)
+      .json({ massage: "Login Success", token: token });
+      
+      console.log(token)
   })(req, res, next);
 };
 
